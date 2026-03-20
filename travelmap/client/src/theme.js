@@ -1,0 +1,52 @@
+export const theme = {
+  page: {
+    minHeight: "100vh",
+    background: "#f6f7f3",
+    fontFamily: "Arial, sans-serif",
+    color: "#0f172a",
+  },
+  container: {
+    maxWidth: "1280px",
+    margin: "0 auto",
+    padding: "28px 32px 40px",
+  },
+  card: {
+    background: "rgba(255,255,255,0.92)",
+    borderRadius: "22px",
+    boxShadow: "0 10px 30px rgba(15,23,42,0.06)",
+    border: "1px solid #edf2f7",
+  },
+  softCard: {
+    background: "#ffffff",
+    borderRadius: "18px",
+    boxShadow: "0 8px 22px rgba(15,23,42,0.05)",
+    border: "1px solid #eef2f7",
+  },
+  pill: {
+    display: "inline-block",
+    padding: "8px 14px",
+    borderRadius: "999px",
+    background: "#dff0fb",
+    color: "#0369a1",
+    fontSize: "14px",
+  },
+  primaryButton: {
+    padding: "14px 22px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#2563eb",
+    color: "white",
+    fontSize: "16px",
+    cursor: "pointer",
+    boxShadow: "0 10px 22px rgba(37,99,235,0.22)",
+  },
+  secondaryButton: {
+    padding: "14px 22px",
+    borderRadius: "14px",
+    border: "1px solid #cbd5e1",
+    background: "white",
+    color: "#0f172a",
+    fontSize: "16px",
+    cursor: "pointer",
+  },
+};
