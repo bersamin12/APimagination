@@ -84,7 +84,7 @@ function MapPage({ theme, toggleTheme }) {
             />
 
             {loading && (
-              <p className="muted" style={{ marginTop: 10, fontSize: 14 }}>
+              <p className="muted" style={{ marginTop: 10, fontSize: 14, backgroundColor:"white", padding: 10, borderRadius: 20 }}>
                 Searching...
               </p>
             )}
@@ -158,7 +158,7 @@ function MapPage({ theme, toggleTheme }) {
               </div>
             </div>
 
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 15 }}>
               <div style={{ fontSize: 18, fontWeight: 800 }}>
                 <AnimatedCounter value={cityCount} />
               </div>
@@ -167,12 +167,12 @@ function MapPage({ theme, toggleTheme }) {
               </div>
             </div>
 
-            <button
+            {/* <button
               className="btn-primary"
               style={{ width: "100%", padding: "10px 14px", fontSize: 13 }}
             >
               Share Journal
-            </button>
+            </button> */}
           </div>
 
           <div className="floating-card latest-card">
@@ -193,11 +193,11 @@ function MapPage({ theme, toggleTheme }) {
             </div>
           </div>
 
-          <div className="right-actions">
+          {/* <div className="right-actions">
             <button className="round-action" type="button">＋</button>
             <button className="round-action" type="button">⌖</button>
             <button className="round-action" type="button">◫</button>
-          </div>
+          </div> */}
 
           <div className="floating-card bottom-stats-card">
             <div>

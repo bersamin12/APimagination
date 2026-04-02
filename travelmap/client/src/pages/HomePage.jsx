@@ -10,13 +10,11 @@ import AnimatedCounter from "../components/AnimatedCounter";
 
 function HomePage({ theme, toggleTheme }) {
   const leftCardStyle = {
-    // backgroundImage: `url(${baliCard})`,
     backgroundImage:
       "linear-gradient(135deg, rgba(190,242,100,0.95), rgba(77,124,15,0.95))",
   };
 
   const rightCardStyle = {
-    // backgroundImage: `url(${kyotoCard})`,
     backgroundImage:
       "linear-gradient(135deg, rgba(125,211,252,0.95), rgba(37,99,235,0.95))",
   };

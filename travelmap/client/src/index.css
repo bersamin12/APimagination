@@ -158,6 +158,7 @@ body.dark .muted {
   font-size: 16px;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(15, 118, 110, 0.22);
+  transition: transform 0.3s;
 }
 
 .btn-secondary {
@@ -168,7 +169,14 @@ body.dark .muted {
   color: #0f172a;
   font-size: 16px;
   cursor: pointer;
+  transition: transform 0.3s;
 }
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  transform: translateY(-5px);
+}
+
 
 body.dark .btn-secondary {
   background: #1e293b;
@@ -390,7 +398,7 @@ body.dark .floating-card {
 }
 
 .bottom-stats-card {
-  left: 50%;
+  left: 35%;
   bottom: 22px;
   transform: translateX(-50%);
   width: 420px;
@@ -399,6 +407,7 @@ body.dark .floating-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transform: none;
 }
 
 .right-actions {

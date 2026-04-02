@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import Navbar from "../components/Navbar";
+import { Link } from "react-router-dom";
 
 function SavedPlacesPage({ theme, toggleTheme }) {
   const [places, setPlaces] = useState([]);
@@ -332,13 +333,13 @@ function SavedPlacesPage({ theme, toggleTheme }) {
             </div>
           ))}
 
-          <div className="editorial-card discovery-card">
+          <Link to='/map' className="editorial-card discovery-card">
             <div className="discovery-icon">＋</div>
             <div className="discovery-title">Save a new discovery</div>
             <div className="discovery-text">
               Pick your next city or country from the map page.
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </div>
