@@ -5,6 +5,10 @@ import TravelMapView from "../components/TravelMapView";
 import Navbar from "../components/Navbar";
 import AnimatedCounter from "../components/AnimatedCounter";
 
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
 function MapPage({ theme, toggleTheme }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -14,37 +18,28 @@ function MapPage({ theme, toggleTheme }) {
 
   const fetchPlaces = async () => {
     try {
-      const response = await api.get("/places");
-      setPlaces(response.data);
-    } catch (error) {
-      console.error("Failed to fetch places:", error);
+      const res = await api.get("/places");
+      setPlaces(res.data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  useEffect(() => {
-    fetchPlaces();
-  }, []);
+  useEffect(() => { fetchPlaces(); }, []);
 
   useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (query.trim().length < 2) {
-        setResults([]);
-        return;
-      }
-
+    const timeout = setTimeout(async () => {
+      if (query.trim().length < 2) { setResults([]); return; }
       setLoading(true);
-
       try {
-        const response = await api.get(`/search?q=${encodeURIComponent(query)}`);
-        setResults(response.data);
-      } catch (error) {
-        console.error("Search failed:", error);
+        const res = await api.get(`/search?q=${encodeURIComponent(query)}`);
+        setResults(res.data);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
-    };
-
-    const timeout = setTimeout(fetchSearchResults, 300);
+    }, 300);
     return () => clearTimeout(timeout);
   }, [query]);
 
@@ -55,249 +50,106 @@ function MapPage({ theme, toggleTheme }) {
       setQuery("");
       setResults([]);
       fetchPlaces();
-    } catch (error) {
-      if (error.response?.status === 409) {
-        setMessage("This place is already saved.");
-      } else {
-        setMessage("Failed to save place.");
-      }
+    } catch (err) {
+      setMessage(err.response?.status === 409 ? "Already saved" : "Failed to save place");
     }
   };
 
-  const cityCount = places.filter((place) => place.type === "city").length;
-  const countryCount = places.filter((place) => place.type === "country").length;
-  const latestPlace = places.length > 0 ? places[0].name : "No saved places yet";
+  const cityCount = places.filter((p) => p.type === "city").length;
+  const countryCount = places.filter((p) => p.type === "country").length;
+  const latestPlace = places[0]?.name || "No saved places yet";
 
   return (
-    <div className="page-shell">
-      <div className="page-container">
+    <div className="min-h-screen px-8 py-8 pb-16">
+      <div className="max-w-[1320px] mx-auto space-y-6">
         <Navbar theme={theme} toggleTheme={toggleTheme} />
 
-        <div className="map-shell card">
-          <div className="map-search">
-            <input
-              className="search-input"
-              type="text"
-              placeholder="Add a city or country"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+        {/* MAP SHELL */}
+        <div className="relative h-[660px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
 
-            {loading && (
-              <p className="muted" style={{ marginTop: 10, fontSize: 14, backgroundColor:"white", padding: 10, borderRadius: 20 }}>
-                Searching...
-              </p>
-            )}
-
-            {!loading && query.trim().length >= 2 && results.length === 0 && (
-              <div className="results-box muted">No matching cities or countries found.</div>
-            )}
-
-            {results.length > 0 && (
-              <div className="results-box">
-                {results.map((place, index) => (
-                  <div
-                    key={place.externalId}
-                    className="result-row"
-                    onClick={() => handleSavePlace(place)}
-                    style={{
-                      borderBottom:
-                        index !== results.length - 1 ? "1px solid #edf2f7" : "none",
-                    }}
-                  >
-                    <div style={{ fontWeight: 800 }}>
-                      {place.name}{" "}
-                      <span className="muted" style={{ fontWeight: 400 }}>
-                        ({place.type})
-                      </span>
-                    </div>
-                    <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-                      {place.countryName}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {message && <div className="info-pill">{message}</div>}
+          {/* MAP LAYER */}
+          <div className="absolute inset-0 z-0">
+            <TravelMapView places={places} />
           </div>
 
-          <div className="floating-card status-card">
-            <div
-              style={{
-                fontSize: 10,
-                letterSpacing: "0.08em",
-                color: "#94a3b8",
-                marginBottom: 8,
-                textTransform: "uppercase",
-              }}
-            >
-              Status
-            </div>
+          {/* OVERLAY */}
+          <div className="absolute inset-0 z-50 pointer-events-none">
 
-            <div
-              style={{
-                display: "inline-block",
-                background: "#fde68a",
-                color: "#92400e",
-                fontSize: 12,
-                padding: "5px 10px",
-                borderRadius: 999,
-                marginBottom: 18,
-              }}
-            >
-              Explorer
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>
-                <AnimatedCounter value={countryCount} />
-              </div>
-              <div className="muted" style={{ fontSize: 13 }}>
-                Countries Visited
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 15 }}>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>
-                <AnimatedCounter value={cityCount} />
-              </div>
-              <div className="muted" style={{ fontSize: 13 }}>
-                Cities Explored
-              </div>
-            </div>
-
-            {/* <button
-              className="btn-primary"
-              style={{ width: "100%", padding: "10px 14px", fontSize: 13 }}
-            >
-              Share Journal
-            </button> */}
-          </div>
-
-          <div className="floating-card latest-card">
-            <div
-              style={{
-                fontSize: 10,
-                letterSpacing: "0.08em",
-                color: "#94a3b8",
-                marginBottom: 10,
-                textTransform: "uppercase",
-              }}
-            >
-              Last Destination
-            </div>
-            <div style={{ fontWeight: 800 }}>{latestPlace}</div>
-            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-              Recently added
-            </div>
-          </div>
-
-          {/* <div className="right-actions">
-            <button className="round-action" type="button">＋</button>
-            <button className="round-action" type="button">⌖</button>
-            <button className="round-action" type="button">◫</button>
-          </div> */}
-
-          <div className="floating-card bottom-stats-card">
-            <div>
-              <div className="muted" style={{ fontSize: 11, textTransform: "uppercase" }}>
-                Total Places
-              </div>
-              <div style={{ fontWeight: 800, fontSize: 22 }}>
-                <AnimatedCounter value={places.length} />
-              </div>
-            </div>
-
-            <div>
-              <div className="muted" style={{ fontSize: 11, textTransform: "uppercase" }}>
-                Planned
-              </div>
-              <div style={{ fontWeight: 800, fontSize: 22 }}>
-                <AnimatedCounter value={3} />
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 999,
-                  background: "#99f6e4",
-                }}
+            {/* SEARCH — top center */}
+            <div className="pointer-events-auto absolute top-4 left-1/2 -translate-x-1/2 w-[44%] min-w-[300px]">
+              <Input
+                placeholder="Add a city or country"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="rounded-full shadow-md bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 h-11 px-5"
               />
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 999,
-                  background: "#cbd5e1",
-                }}
-              />
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 999,
-                  background: "#94a3b8",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                }}
-              >
-                +5
-              </div>
+
+              {loading && (
+                <Card className="mt-2 px-4 py-3 text-sm text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-md">
+                  Searching...
+                </Card>
+              )}
+
+              {!loading && query.length >= 2 && results.length === 0 && (
+                <Card className="mt-2 px-4 py-3 text-sm text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-md">
+                  No results found
+                </Card>
+              )}
+
+              {results.length > 0 && (
+                <Card className="mt-2 p-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-md">
+                  {results.map((place, i) => (
+                    <div
+                      key={place.externalId}
+                      onClick={() => handleSavePlace(place)}
+                      className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <div className="font-semibold text-slate-800 dark:text-slate-100">
+                        {place.name}{" "}
+                        <span className="text-sm font-normal text-slate-400">({place.type})</span>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">{place.countryName}</div>
+                      {i !== results.length - 1 && <div className="border-t border-slate-100 dark:border-slate-700 mt-2" />}
+                    </div>
+                  ))}
+                </Card>
+              )}
+
+              {message && (
+                <Badge className="mt-2 shadow-sm">{message}</Badge>
+              )}
             </div>
-          </div>
 
-          <TravelMapView places={places} />
-        </div>
-
-        <div className="saved-preview-header" style={{ marginTop: 18 }}>
-          <h2 style={{ margin: 0 }}>Saved Places</h2>
-          <Link className="nav-link" to="/saved">
-            View all
-          </Link>
-        </div>
-
-        {places.length === 0 ? (
-          <div className="card saved-card muted">No places saved yet.</div>
-        ) : (
-          <div className="saved-grid">
-            {places.slice(0, 4).map((place) => (
-              <div className="card saved-card" key={place.id}>
-                <div className="saved-card-image-wrap">
-                  {place.image_url ? (
-                    <img
-                      src={place.image_url}
-                      alt={place.image_alt || place.name}
-                      className="saved-card-real-image"
-                    />
-                  ) : (
-                    <div className="fallback-image">No image</div>
-                  )}
-                </div>
-
-                <div style={{ fontWeight: 800, marginBottom: 6 }}>{place.name}</div>
-                <div className="muted" style={{ fontSize: 13, textTransform: "capitalize" }}>
-                  {place.type}
-                </div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                  {place.country_name || "—"}
-                </div>
-
-                {place.comment && (
-                  <div className="map-card-comment">
-                    {place.comment}
-                  </div>
-                )}
+            {/* STATUS — top left */}
+            <Card className="pointer-events-auto absolute top-4 left-4 w-44 p-4 dark:bg-slate-800/95 border-slate-200 dark:border-slate-700">
+              <div className="uppercase text-[12px] text-slate-400 dark:text-slate-500 font-medium">
+                Status
               </div>
-            ))}
+              <Badge variant="secondary" className="text-l m-0">Explorer</Badge>
+              <div className="space-y-1 pt-1">
+                <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-none">
+                  <AnimatedCounter value={countryCount} />
+                </div>
+                <div className="text-xs text-slate-400 mt-1">Countries</div>
+                <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-none">
+                  <AnimatedCounter value={cityCount} />
+                </div>
+                <div className="text-xs text-slate-400 mt-1">Cities</div>
+              </div>
+            </Card>
+
+            {/* LAST DESTINATION */}
+            <Card className="pointer-events-auto absolute top-[40%] left-4 w-44 p-4 dark:bg-slate-800/95 border-slate-200 dark:border-slate-700">
+              <div className="text-[10px] uppercase text-slate-400 dark:text-slate-500 font-medium">
+                Last Destination
+              </div>
+              <div className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-snug">
+                {latestPlace}
+              </div>
+            </Card>
+
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

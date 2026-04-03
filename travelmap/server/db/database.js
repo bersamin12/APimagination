@@ -23,8 +23,6 @@ db.serialize(() => {
       external_id TEXT NOT NULL UNIQUE,
       image_url TEXT,
       image_alt TEXT,
-      attachment_name TEXT,
-      attachment_url TEXT,
       comment_log TEXT,
       visit_date TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -51,8 +49,6 @@ db.serialize(() => {
 
     addColumnIfMissing("image_url", "TEXT");
     addColumnIfMissing("image_alt", "TEXT");
-    addColumnIfMissing("attachment_name", "TEXT");
-    addColumnIfMissing("attachment_url", "TEXT");
     addColumnIfMissing("comment_log", "TEXT");
     addColumnIfMissing("visit_date", "TEXT");
   });

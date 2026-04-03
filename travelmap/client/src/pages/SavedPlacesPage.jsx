@@ -3,33 +3,41 @@ import api from "../api";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
 
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+
 function SavedPlacesPage({ theme, toggleTheme }) {
   const [places, setPlaces] = useState([]);
   const [filter, setFilter] = useState("all");
   const [message, setMessage] = useState("");
-  const [uploadingId, setUploadingId] = useState(null);
+
+  // const [uploadingId, setUploadingId] = useState(null);
   const [savingCommentId, setSavingCommentId] = useState(null);
   const [savingDateId, setSavingDateId] = useState(null);
+
   const [commentDrafts, setCommentDrafts] = useState({});
   const [dateDrafts, setDateDrafts] = useState({});
 
   const fetchPlaces = async () => {
     try {
-      const response = await api.get("/places");
-      setPlaces(response.data);
+      const res = await api.get("/places");
+      setPlaces(res.data);
 
-      const nextCommentDrafts = {};
-      const nextDateDrafts = {};
+      const comments = {};
+      const dates = {};
 
-      response.data.forEach((place) => {
-        nextCommentDrafts[place.id] = "";
-        nextDateDrafts[place.id] = place.visit_date || "";
+      res.data.forEach((p) => {
+        comments[p.id] = "";
+        dates[p.id] = p.visit_date || "";
       });
 
-      setCommentDrafts(nextCommentDrafts);
-      setDateDrafts(nextDateDrafts);
-    } catch (error) {
-      console.error("Failed to fetch places:", error);
+      setCommentDrafts(comments);
+      setDateDrafts(dates);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -42,304 +50,235 @@ function SavedPlacesPage({ theme, toggleTheme }) {
       await api.delete(`/places/${id}`);
       setMessage(`Deleted ${name}`);
       fetchPlaces();
-    } catch (error) {
-      console.error("Failed to delete place:", error);
+    } catch {
       setMessage("Failed to delete place.");
     }
   };
 
-  const handleAttachmentUpload = async (placeId, file) => {
-    if (!file) return;
+  // const handleUpload = async (id, file) => {
+  //   if (!file) return;
 
-    try {
-      setUploadingId(placeId);
+  //   try {
+  //     setUploadingId(id);
 
-      const formData = new FormData();
-      formData.append("attachment", file);
+  //     const formData = new FormData();
+  //     formData.append("attachment", file);
 
-      await api.patch(`/places/${placeId}/attachment`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+  //     await api.patch(`/places/${id}/attachment`, formData);
 
-      setMessage(`Uploaded ${file.name}`);
-      fetchPlaces();
-    } catch (error) {
-      console.error("Failed to upload attachment:", error);
-      setMessage("Failed to upload attachment.");
-    } finally {
-      setUploadingId(null);
-    }
-  };
+  //     setMessage(`Uploaded ${file.name}`);
+  //     fetchPlaces();
+  //   } catch {
+  //     setMessage("Upload failed.");
+  //   } finally {
+  //     setUploadingId(null);
+  //   }
+  // };
 
-  const handleRemoveAttachment = async (placeId) => {
-    try {
-      await api.patch(`/places/${placeId}/remove-attachment`);
-      setMessage("Attachment removed.");
-      fetchPlaces();
-    } catch (error) {
-      console.error("Failed to remove attachment:", error);
-      setMessage("Failed to remove attachment.");
-    }
-  };
+  // const handleRemoveAttachment = async (id) => {
+  //   try {
+  //     await api.patch(`/places/${id}/remove-attachment`);
+  //     setMessage("Attachment removed.");
+  //     fetchPlaces();
+  //   } catch {
+  //     setMessage("Failed to remove.");
+  //   }
+  // };
 
-  const handleSaveComment = async (placeId) => {
-    const text = commentDrafts[placeId] || "";
-
+  const handleSaveComment = async (id) => {
+    const text = commentDrafts[id];
     if (!text.trim()) return;
 
     try {
-      setSavingCommentId(placeId);
+      setSavingCommentId(id);
 
-      await api.patch(`/places/${placeId}/comment-log`, {
-        text,
-      });
+      await api.patch(`/places/${id}/comment-log`, { text });
 
       setMessage("Comment saved.");
-      await fetchPlaces();
-    } catch (error) {
-      console.error("Failed to save comment:", error);
-      setMessage("Failed to save comment.");
+      fetchPlaces();
     } finally {
       setSavingCommentId(null);
     }
   };
 
-  const handleSaveVisitDate = async (placeId) => {
+  const handleSaveDate = async (id) => {
     try {
-      setSavingDateId(placeId);
+      setSavingDateId(id);
 
-      await api.patch(`/places/${placeId}/visit-date`, {
-        visitDate: dateDrafts[placeId] || null,
+      await api.patch(`/places/${id}/visit-date`, {
+        visitDate: dateDrafts[id] || null,
       });
 
       setMessage("Visit date saved.");
-      await fetchPlaces();
-    } catch (error) {
-      console.error("Failed to save visit date:", error);
-      setMessage("Failed to save visit date.");
+      fetchPlaces();
     } finally {
       setSavingDateId(null);
     }
   };
 
-  const isImageAttachment = (url = "", name = "") => {
-    const value = `${url} ${name}`.toLowerCase();
-    return (
-      value.includes(".png") ||
-      value.includes(".jpg") ||
-      value.includes(".jpeg") ||
-      value.includes(".gif") ||
-      value.includes(".webp")
-    );
-  };
+  const filtered =
+    filter === "all" ? places : places.filter((p) => p.type === filter);
 
-  const formatLogDate = (isoString) => {
-    if (!isoString) return "";
-    const date = new Date(isoString);
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const formatDate = (iso) => {
+    if (!iso) return "";
+    return new Date(iso).toLocaleDateString();
   };
-
-  const filteredPlaces =
-    filter === "all" ? places : places.filter((place) => place.type === filter);
 
   return (
-    <div className="page-shell">
-      <div className="page-container">
+    <div className="min-h-screen px-6 py-6 pb-10">
+      <div className="max-w-[1320px] mx-auto">
+
         <Navbar theme={theme} toggleTheme={toggleTheme} />
 
-        <div className="saved-header-row">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mt-4 mb-6">
           <div>
-            <div className="saved-kicker">Travel Archive</div>
-            <h1 className="saved-title">SavedPlaces</h1>
+            <p className="text-sm text-slate-500">Travel Archive</p>
+            <h1 className="text-3xl font-bold">Saved Places</h1>
           </div>
 
-          <div className="saved-filter-pills">
-            <button
-              className={`filter-btn ${filter === "all" ? "active" : ""}`}
-              onClick={() => setFilter("all")}
-            >
-              All
-            </button>
-            <button
-              className={`filter-btn ${filter === "country" ? "active" : ""}`}
-              onClick={() => setFilter("country")}
-            >
-              Countries
-            </button>
-            <button
-              className={`filter-btn ${filter === "city" ? "active" : ""}`}
-              onClick={() => setFilter("city")}
-            >
-              Cities
-            </button>
+          <div className="flex gap-2">
+            {["all", "country", "city"].map((type) => (
+              <Button
+                key={type}
+                variant={filter === type ? "default" : "outline"}
+                onClick={() => setFilter(type)}
+                className="capitalize"
+              >
+                {type}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {message && <div className="info-pill" style={{ marginBottom: 18 }}>{message}</div>}
+        {message && (
+          <Badge className="mb-4">{message}</Badge>
+        )}
 
-        <div className="saved-gallery-grid">
-          {filteredPlaces.map((place) => (
-            <div key={place.id} className="editorial-card photo-card-real">
-              <div className="editorial-top">
-                <div className="editorial-tag">{place.type}</div>
-                <div className="editorial-dot">•</div>
-              </div>
+        {/* GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-              <div className="editorial-image real-saved-image-wrap">
-                {place.image_url ? (
-                  <img
-                    src={place.image_url}
-                    alt={place.image_alt || place.name}
-                    className="real-saved-image"
-                  />
-                ) : (
-                  <div className="fallback-image">No image</div>
-                )}
-              </div>
+          {filtered.map((place) => (
+            <Card key={place.id} className="p-4 space-y-4">
 
-              <div className="editorial-body">
-                <div className="editorial-name">{place.name}</div>
-                <div className="editorial-meta">
-                  {place.country_name || "Unknown region"}
+              <CardContent className="p-0 space-y-4">
+
+                {/* IMAGE */}
+                <div className="h-[180px] rounded-xl overflow-hidden bg-slate-100">
+                  {place.image_url ? (
+                    <img
+                      src={place.image_url}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-sm text-slate-500">
+                      No image
+                    </div>
+                  )}
                 </div>
 
-                <div className="visit-date-wrap">
-                  <label className="visit-date-label">Visited on</label>
-                  <div className="visit-date-row">
-                    <input
+                {/* TITLE */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">{place.name}</h3>
+                    <Badge variant="secondary">{place.type}</Badge>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    {place.country_name || "Unknown"}
+                  </p>
+                </div>
+
+                {/* DATE */}
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500">Visited on</p>
+                  <div className="flex gap-2">
+                    <Input
                       type="date"
-                      className="visit-date-input"
                       value={dateDrafts[place.id] || ""}
                       onChange={(e) =>
-                        setDateDrafts((prev) => ({
-                          ...prev,
+                        setDateDrafts((p) => ({
+                          ...p,
                           [place.id]: e.target.value,
                         }))
                       }
                     />
-                    <button
-                      className="save-date-btn"
-                      onClick={() => handleSaveVisitDate(place.id)}
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveDate(place.id)}
                     >
-                      {savingDateId === place.id ? "Saving..." : "Save Date"}
-                    </button>
+                      {savingDateId === place.id ? "..." : "Save"}
+                    </Button>
                   </div>
                 </div>
 
+                {/* COMMENTS */}
                 {place.comment_log?.length > 0 && (
-                  <div className="comment-log-wrap">
-                    <div className="comment-log-title">Travel log</div>
-
-                    {place.comment_log.map((entry, index) => (
-                      <div key={`${place.id}-${index}`} className="comment-log-entry">
-                        <div className="comment-log-date">
-                          {formatLogDate(entry.created_at)}
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-500">Travel log</p>
+                    {place.comment_log.map((c, i) => (
+                      <div key={i} className="text-sm border-l pl-3">
+                        <div className="text-xs text-slate-400">
+                          {formatDate(c.created_at)}
                         </div>
-                        <div className="comment-log-text">{entry.text}</div>
+                        {c.text}
                       </div>
                     ))}
                   </div>
                 )}
 
-                <textarea
-                  className="comment-box"
-                  placeholder="Add another memory about this place..."
+                <Textarea
+                  placeholder="Add a memory..."
                   value={commentDrafts[place.id] || ""}
                   onChange={(e) =>
-                    setCommentDrafts((prev) => ({
-                      ...prev,
+                    setCommentDrafts((p) => ({
+                      ...p,
                       [place.id]: e.target.value,
                     }))
                   }
                 />
 
-                <button
-                  className="save-comment-btn"
-                  onClick={() => handleSaveComment(place.id)}
-                >
-                  {savingCommentId === place.id ? "Posting..." : "Post Comment"}
-                </button>
-
-                {place.attachment_url ? (
-                  <div className="attachment-preview-wrap">
-                    <div className="attachment-title">Attachment</div>
-
-                    {isImageAttachment(place.attachment_url, place.attachment_name) ? (
-                      <a
-                        href={place.attachment_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="attachment-image-link"
-                      >
-                        <img
-                          src={place.attachment_url}
-                          alt={place.attachment_name || "attachment"}
-                          className="attachment-preview-image"
-                        />
-                      </a>
-                    ) : (
-                      <a
-                        href={place.attachment_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="attachment-file-card"
-                      >
-                        <div className="attachment-file-icon">📎</div>
-                        <div className="attachment-file-name">
-                          {place.attachment_name || "Open attachment"}
-                        </div>
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <div className="no-attachment-text">No attachment yet</div>
-                )}
-              </div>
-
-              <div className="attachment-actions">
-                <label className="upload-btn">
-                  {uploadingId === place.id ? "Uploading..." : "Add Attachment"}
-                  <input
-                    type="file"
-                    hidden
-                    onChange={(e) =>
-                      handleAttachmentUpload(place.id, e.target.files?.[0])
-                    }
-                  />
-                </label>
-
-                {place.attachment_url && (
-                  <button
-                    className="remove-attachment-btn"
-                    onClick={() => handleRemoveAttachment(place.id)}
+                <div className="flex justify-between">
+                  <Button
+                    onClick={() => handleSaveComment(place.id)}
+                    size="sm"
                   >
-                    Remove Attachment
-                  </button>
-                )}
+                    {savingCommentId === place.id ? "Posting..." : "Post"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(place.id, place.name)}
+                  >
+                    DELETE PLACE
+                  </Button>
+                </div>
 
-                <button
-                  className="delete-btn editorial-delete"
+              </CardContent>
+
+              {/* DELETE */}
+              {/* <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
                   onClick={() => handleDelete(place.id, place.name)}
                 >
                   Delete
-                </button>
-              </div>
-            </div>
+                </Button>
+              </div> */}
+            </Card>
           ))}
 
-          <Link to='/map' className="editorial-card discovery-card">
-            <div className="discovery-icon">＋</div>
-            <div className="discovery-title">Save a new discovery</div>
-            <div className="discovery-text">
-              Pick your next city or country from the map page.
-            </div>
+          {/* ADD NEW */}
+          <Link to="/map">
+            <Card className="flex flex-col items-center justify-center text-center p-6 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+              <div className="text-3xl mb-2">＋</div>
+              <div className="font-semibold">Add new place</div>
+              <div className="text-sm text-slate-500">
+                Go to map and discover
+              </div>
+            </Card>
           </Link>
+
         </div>
       </div>
     </div>

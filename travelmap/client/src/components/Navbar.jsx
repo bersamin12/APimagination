@@ -1,44 +1,28 @@
+import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 
 function Navbar({ toggleTheme, theme }) {
   const location = useLocation();
 
-  const linkStyle = (path) => ({
-    textDecoration: "none",
-    color: location.pathname === path ? "#0f766e" : "#64748b",
-    fontSize: "14px",
-    fontWeight: location.pathname === path ? "700" : "500",
-    paddingBottom: "4px",
-    borderBottom:
-      location.pathname === path ? "2px solid #0f766e" : "2px solid transparent",
-  });
+  const linkClass = (path) =>
+    `text-sm font-medium pb-1 border-b-2 transition-colors duration-150 ${
+      location.pathname === path
+        ? "text-teal-700 dark:text-sky-300 border-teal-700 dark:border-sky-300"
+        : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-800 dark:hover:text-slate-200"
+    }`;
 
   return (
-    <div className="topbar">
-      <div className="brand">Voyaguer</div>
-
-      <div className="nav-links">
-        <Link to="/" style={linkStyle("/")}>Home</Link>
-        <Link to="/map" style={linkStyle("/map")}>Map</Link>
-        <Link to="/saved" style={linkStyle("/saved")}>Saved Places</Link>
-
-        {/* <button className="icon-btn" title="Notifications" type="button">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z" fill="currentColor"/>
-            <path d="M18 16V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/>
-          </svg>
-        </button>
-
-        <button className="icon-btn" title="Settings" type="button">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="1.7"/>
-            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 1 1-4 0v-.1a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 1 1 0-4h.1a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a2 2 0 1 1 4 0v.1a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a2 2 0 1 1 0 4h-.1a1 1 0 0 0-.9.6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-          </svg>
-        </button> */}
-
-        <button className="theme-btn" onClick={toggleTheme} type="button">
+    <div className="h-16 flex items-center justify-between px-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm shadow-sm">
+      <div className="text-xl font-extrabold text-teal-800 dark:text-sky-200 tracking-tight">
+        Voyaguer
+      </div>
+      <div className="flex items-center gap-6">
+        <Link to="/" className={linkClass("/")}>Home</Link>
+        <Link to="/map" className={linkClass("/map")}>Map</Link>
+        <Link to="/saved" className={linkClass("/saved")}>Saved Places</Link>
+        <Button variant="ghost" size="s" onClick={toggleTheme} className="text-base p-2">
           {theme === "light" ? "🌙" : "☀️"}
-        </button>
+        </Button>
       </div>
     </div>
   );

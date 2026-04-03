@@ -1,29 +1,29 @@
 const express = require("express");
 const db = require("../db/database");
 const axios = require("axios");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+// const multer = require("multer");
+// const path = require("path");
+// const fs = require("fs");
 
 const router = express.Router();
 
-const uploadsDir = path.join(__dirname, "..", "uploads");
+// const uploadsDir = path.join(__dirname, "..", "uploads");
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// if (!fs.existsSync(uploadsDir)) {
+//   fs.mkdirSync(uploadsDir, { recursive: true });
+// }
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    const safeName = file.originalname.replace(/\s+/g, "-");
-    cb(null, `${Date.now()}-${safeName}`);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, uploadsDir);
+//   },
+//   filename: function (req, file, cb) {
+//     const safeName = file.originalname.replace(/\s+/g, "-");
+//     cb(null, `${Date.now()}-${safeName}`);
+//   },
+// });
 
-const upload = multer({ storage });
+// const upload = multer({ storage });
 
 async function fetchUnsplashImage(place) {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY;
@@ -133,8 +133,6 @@ router.post("/", async (req, res) => {
         external_id,
         image_url,
         image_alt,
-        attachment_name,
-        attachment_url,
         comment_log,
         visit_date
       )
@@ -152,8 +150,6 @@ router.post("/", async (req, res) => {
         externalId,
         imageUrl,
         imageAlt,
-        null,
-        null,
         JSON.stringify([]),
         null,
       ],
@@ -172,83 +168,83 @@ router.post("/", async (req, res) => {
   });
 });
 
-// UPLOAD attachment
-router.patch("/:id/attachment", upload.single("attachment"), (req, res) => {
-  const { id } = req.params;
+// // UPLOAD attachment
+// router.patch("/:id/attachment", upload.single("attachment"), (req, res) => {
+//   const { id } = req.params;
 
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded." });
-  }
+//   if (!req.file) {
+//     return res.status(400).json({ error: "No file uploaded." });
+//   }
 
-  const attachmentName = req.file.originalname;
-  const attachmentUrl = `http://localhost:3001/uploads/${req.file.filename}`;
+//   const attachmentName = req.file.originalname;
+//   const attachmentUrl = `http://localhost:3001/uploads/${req.file.filename}`;
 
-  const sql = `
-    UPDATE places
-    SET attachment_name = ?, attachment_url = ?
-    WHERE id = ?
-  `;
+//   const sql = `
+//     UPDATE places
+//     SET attachment_name = ?, attachment_url = ?
+//     WHERE id = ?
+//   `;
 
-  db.run(sql, [attachmentName, attachmentUrl, id], function (err) {
-    if (err) {
-      console.error("Error saving attachment:", err.message);
-      return res.status(500).json({ error: "Failed to save attachment." });
-    }
+//   db.run(sql, [attachmentName, attachmentUrl, id], function (err) {
+//     if (err) {
+//       console.error("Error saving attachment:", err.message);
+//       return res.status(500).json({ error: "Failed to save attachment." });
+//     }
 
-    if (this.changes === 0) {
-      return res.status(404).json({ error: "Place not found." });
-    }
+//     if (this.changes === 0) {
+//       return res.status(404).json({ error: "Place not found." });
+//     }
 
-    res.json({
-      message: "Attachment uploaded successfully.",
-      attachment_name: attachmentName,
-      attachment_url: attachmentUrl,
-    });
-  });
-});
+//     res.json({
+//       message: "Attachment uploaded successfully.",
+//       attachment_name: attachmentName,
+//       attachment_url: attachmentUrl,
+//     });
+//   });
+// });
 
 // REMOVE attachment
-router.patch("/:id/remove-attachment", (req, res) => {
-  const { id } = req.params;
+// router.patch("/:id/remove-attachment", (req, res) => {
+//   const { id } = req.params;
 
-  const getSql = `SELECT attachment_url FROM places WHERE id = ?`;
+//   const getSql = `SELECT attachment_url FROM places WHERE id = ?`;
 
-  db.get(getSql, [id], (getErr, place) => {
-    if (getErr) {
-      console.error("Error fetching attachment:", getErr.message);
-      return res.status(500).json({ error: "Failed to fetch attachment." });
-    }
+//   db.get(getSql, [id], (getErr, place) => {
+//     if (getErr) {
+//       console.error("Error fetching attachment:", getErr.message);
+//       return res.status(500).json({ error: "Failed to fetch attachment." });
+//     }
 
-    if (!place) {
-      return res.status(404).json({ error: "Place not found." });
-    }
+//     if (!place) {
+//       return res.status(404).json({ error: "Place not found." });
+//     }
 
-    if (place.attachment_url) {
-      const filename = place.attachment_url.split("/uploads/")[1];
-      if (filename) {
-        const filePath = path.join(uploadsDir, filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlink(filePath, () => {});
-        }
-      }
-    }
+//     if (place.attachment_url) {
+//       const filename = place.attachment_url.split("/uploads/")[1];
+//       if (filename) {
+//         const filePath = path.join(uploadsDir, filename);
+//         if (fs.existsSync(filePath)) {
+//           fs.unlink(filePath, () => {});
+//         }
+//       }
+//     }
 
-    const updateSql = `
-      UPDATE places
-      SET attachment_name = NULL, attachment_url = NULL
-      WHERE id = ?
-    `;
+//     const updateSql = `
+//       UPDATE places
+//       SET attachment_name = NULL, attachment_url = NULL
+//       WHERE id = ?
+//     `;
 
-    db.run(updateSql, [id], function (updateErr) {
-      if (updateErr) {
-        console.error("Error removing attachment:", updateErr.message);
-        return res.status(500).json({ error: "Failed to remove attachment." });
-      }
+//     db.run(updateSql, [id], function (updateErr) {
+//       if (updateErr) {
+//         console.error("Error removing attachment:", updateErr.message);
+//         return res.status(500).json({ error: "Failed to remove attachment." });
+//       }
 
-      res.json({ message: "Attachment removed successfully." });
-    });
-  });
-});
+//       res.json({ message: "Attachment removed successfully." });
+//     });
+//   });
+// });
 
 // ADD comment entry to log
 router.patch("/:id/comment-log", (req, res) => {
@@ -325,39 +321,15 @@ router.patch("/:id/visit-date", (req, res) => {
 // DELETE place
 router.delete("/:id", (req, res) => {
   const { id } = req.params;
-
-  const getSql = `SELECT attachment_url FROM places WHERE id = ?`;
-
-  db.get(getSql, [id], (getErr, place) => {
-    if (getErr) {
-      console.error("Error fetching place before delete:", getErr.message);
+  db.run(`DELETE FROM places WHERE id = ?`, [id], function (err) {
+    if (err) {
+      console.error("Error deleting place:", err.message);
       return res.status(500).json({ error: "Failed to delete place." });
     }
-
-    if (place?.attachment_url) {
-      const filename = place.attachment_url.split("/uploads/")[1];
-      if (filename) {
-        const filePath = path.join(uploadsDir, filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlink(filePath, () => {});
-        }
-      }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: "Place not found." });
     }
-
-    const sql = `DELETE FROM places WHERE id = ?`;
-
-    db.run(sql, [id], function (err) {
-      if (err) {
-        console.error("Error deleting place:", err.message);
-        return res.status(500).json({ error: "Failed to delete place." });
-      }
-
-      if (this.changes === 0) {
-        return res.status(404).json({ error: "Place not found." });
-      }
-
-      res.json({ message: "Place deleted successfully." });
-    });
+    res.json({ message: "Place deleted successfully." });
   });
 });
 
