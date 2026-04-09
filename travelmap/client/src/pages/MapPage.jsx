@@ -15,6 +15,7 @@ function MapPage({ theme, toggleTheme }) {
   const [places, setPlaces] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [countriesVisited, setCountriesVisited] = useState(0)
 
   const fetchPlaces = async () => {
     try {
@@ -25,7 +26,19 @@ function MapPage({ theme, toggleTheme }) {
     }
   };
 
-  useEffect(() => { fetchPlaces(); }, []);
+  const fetchCountriesVisited = async () => {
+    try {
+      const res = await api.get('/places/countries-count');
+      setCountriesVisited(res.data.count)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => { 
+    fetchPlaces(); 
+    fetchCountriesVisited();
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
@@ -50,13 +63,14 @@ function MapPage({ theme, toggleTheme }) {
       setQuery("");
       setResults([]);
       fetchPlaces();
+      fetchCountriesVisited(); 
     } catch (err) {
       setMessage(err.response?.status === 409 ? "Already saved" : "Failed to save place");
     }
   };
 
   const cityCount = places.filter((p) => p.type === "city").length;
-  const countryCount = places.filter((p) => p.type === "country").length;
+  // const countryCount = places.filter((p) => p.type === "country").length;
   const latestPlace = places[0]?.name || "No saved places yet";
 
   return (
@@ -128,7 +142,7 @@ function MapPage({ theme, toggleTheme }) {
               <Badge variant="secondary" className="text-l m-0">Explorer</Badge>
               <div className="space-y-1 pt-1">
                 <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-none">
-                  <AnimatedCounter value={countryCount} />
+                  <AnimatedCounter value={countriesVisited} />
                 </div>
                 <div className="text-xs text-slate-400 mt-1">Countries</div>
                 <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-none">

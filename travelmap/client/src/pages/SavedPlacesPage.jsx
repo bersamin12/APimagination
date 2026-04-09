@@ -11,13 +11,9 @@ import { Badge } from "@/components/ui/badge";
 
 function SavedPlacesPage({ theme, toggleTheme }) {
   const [places, setPlaces] = useState([]);
-  const [filter, setFilter] = useState("all");
   const [message, setMessage] = useState("");
-
-  // const [uploadingId, setUploadingId] = useState(null);
   const [savingCommentId, setSavingCommentId] = useState(null);
   const [savingDateId, setSavingDateId] = useState(null);
-
   const [commentDrafts, setCommentDrafts] = useState({});
   const [dateDrafts, setDateDrafts] = useState({});
 
@@ -55,36 +51,6 @@ function SavedPlacesPage({ theme, toggleTheme }) {
     }
   };
 
-  // const handleUpload = async (id, file) => {
-  //   if (!file) return;
-
-  //   try {
-  //     setUploadingId(id);
-
-  //     const formData = new FormData();
-  //     formData.append("attachment", file);
-
-  //     await api.patch(`/places/${id}/attachment`, formData);
-
-  //     setMessage(`Uploaded ${file.name}`);
-  //     fetchPlaces();
-  //   } catch {
-  //     setMessage("Upload failed.");
-  //   } finally {
-  //     setUploadingId(null);
-  //   }
-  // };
-
-  // const handleRemoveAttachment = async (id) => {
-  //   try {
-  //     await api.patch(`/places/${id}/remove-attachment`);
-  //     setMessage("Attachment removed.");
-  //     fetchPlaces();
-  //   } catch {
-  //     setMessage("Failed to remove.");
-  //   }
-  // };
-
   const handleSaveComment = async (id) => {
     const text = commentDrafts[id];
     if (!text.trim()) return;
@@ -116,9 +82,6 @@ function SavedPlacesPage({ theme, toggleTheme }) {
     }
   };
 
-  const filtered =
-    filter === "all" ? places : places.filter((p) => p.type === filter);
-
   const formatDate = (iso) => {
     if (!iso) return "";
     return new Date(iso).toLocaleDateString();
@@ -136,19 +99,6 @@ function SavedPlacesPage({ theme, toggleTheme }) {
             <p className="text-sm text-slate-500">Travel Archive</p>
             <h1 className="text-3xl font-bold">Saved Places</h1>
           </div>
-
-          <div className="flex gap-2">
-            {["all", "country", "city"].map((type) => (
-              <Button
-                key={type}
-                variant={filter === type ? "default" : "outline"}
-                onClick={() => setFilter(type)}
-                className="capitalize"
-              >
-                {type}
-              </Button>
-            ))}
-          </div>
         </div>
 
         {message && (
@@ -158,7 +108,7 @@ function SavedPlacesPage({ theme, toggleTheme }) {
         {/* GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {filtered.map((place) => (
+          {places.map((place) => (
             <Card key={place.id} className="p-4 space-y-4">
 
               <CardContent className="p-0 space-y-4">
@@ -181,7 +131,6 @@ function SavedPlacesPage({ theme, toggleTheme }) {
                 <div>
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{place.name}</h3>
-                    <Badge variant="secondary">{place.type}</Badge>
                   </div>
                   <p className="text-sm text-slate-500">
                     {place.country_name || "Unknown"}
@@ -254,17 +203,6 @@ function SavedPlacesPage({ theme, toggleTheme }) {
                 </div>
 
               </CardContent>
-
-              {/* DELETE */}
-              {/* <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDelete(place.id, place.name)}
-                >
-                  Delete
-                </Button>
-              </div> */}
             </Card>
           ))}
 

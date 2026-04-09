@@ -1,29 +1,8 @@
 const express = require("express");
 const db = require("../db/database");
 const axios = require("axios");
-// const multer = require("multer");
-// const path = require("path");
-// const fs = require("fs");
 
 const router = express.Router();
-
-// const uploadsDir = path.join(__dirname, "..", "uploads");
-
-// if (!fs.existsSync(uploadsDir)) {
-//   fs.mkdirSync(uploadsDir, { recursive: true });
-// }
-
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, uploadsDir);
-//   },
-//   filename: function (req, file, cb) {
-//     const safeName = file.originalname.replace(/\s+/g, "-");
-//     cb(null, `${Date.now()}-${safeName}`);
-//   },
-// });
-
-// const upload = multer({ storage });
 
 async function fetchUnsplashImage(place) {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY;
@@ -107,7 +86,7 @@ router.post("/", async (req, res) => {
 
   const checkSql = `SELECT * FROM places WHERE external_id = ?`;
 
-  db.get(checkSql, [externalId], async (checkErr, existingPlace) => {
+  db.get(checkSql, [String(externalId)], async (checkErr, existingPlace) => {
     if (checkErr) {
       console.error("Error checking duplicates:", checkErr.message);
       return res.status(500).json({ error: "Failed to check duplicates." });
@@ -136,7 +115,7 @@ router.post("/", async (req, res) => {
         comment_log,
         visit_date
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.run(
@@ -147,7 +126,7 @@ router.post("/", async (req, res) => {
         countryName || null,
         latitude,
         longitude,
-        externalId,
+        String(externalId),
         imageUrl,
         imageAlt,
         JSON.stringify([]),
@@ -156,6 +135,11 @@ router.post("/", async (req, res) => {
       function (insertErr) {
         if (insertErr) {
           console.error("Error saving place:", insertErr.message);
+
+          if (insertErr.message.includes("UNIQUE constraint failed")) {
+            return res.status(409).json({ error: "This place is already saved." });
+          }
+
           return res.status(500).json({ error: "Failed to save place." });
         }
 
@@ -168,83 +152,22 @@ router.post("/", async (req, res) => {
   });
 });
 
-// // UPLOAD attachment
-// router.patch("/:id/attachment", upload.single("attachment"), (req, res) => {
-//   const { id } = req.params;
+router.get("/countries-count", (req, res) => {
+  const sql = `
+    SELECT COUNT(DISTINCT country_name) as count
+    FROM places
+    WHERE country_name IS NOT NULL AND country_name != ''
+  `;
 
-//   if (!req.file) {
-//     return res.status(400).json({ error: "No file uploaded." });
-//   }
+  db.get(sql, [], (err, row) => {
+    if (err) {
+      console.error("Error counting countries:", err.message);
+      return res.status(500).json({ error: "Failed to count countries." });
+    }
 
-//   const attachmentName = req.file.originalname;
-//   const attachmentUrl = `http://localhost:3001/uploads/${req.file.filename}`;
-
-//   const sql = `
-//     UPDATE places
-//     SET attachment_name = ?, attachment_url = ?
-//     WHERE id = ?
-//   `;
-
-//   db.run(sql, [attachmentName, attachmentUrl, id], function (err) {
-//     if (err) {
-//       console.error("Error saving attachment:", err.message);
-//       return res.status(500).json({ error: "Failed to save attachment." });
-//     }
-
-//     if (this.changes === 0) {
-//       return res.status(404).json({ error: "Place not found." });
-//     }
-
-//     res.json({
-//       message: "Attachment uploaded successfully.",
-//       attachment_name: attachmentName,
-//       attachment_url: attachmentUrl,
-//     });
-//   });
-// });
-
-// REMOVE attachment
-// router.patch("/:id/remove-attachment", (req, res) => {
-//   const { id } = req.params;
-
-//   const getSql = `SELECT attachment_url FROM places WHERE id = ?`;
-
-//   db.get(getSql, [id], (getErr, place) => {
-//     if (getErr) {
-//       console.error("Error fetching attachment:", getErr.message);
-//       return res.status(500).json({ error: "Failed to fetch attachment." });
-//     }
-
-//     if (!place) {
-//       return res.status(404).json({ error: "Place not found." });
-//     }
-
-//     if (place.attachment_url) {
-//       const filename = place.attachment_url.split("/uploads/")[1];
-//       if (filename) {
-//         const filePath = path.join(uploadsDir, filename);
-//         if (fs.existsSync(filePath)) {
-//           fs.unlink(filePath, () => {});
-//         }
-//       }
-//     }
-
-//     const updateSql = `
-//       UPDATE places
-//       SET attachment_name = NULL, attachment_url = NULL
-//       WHERE id = ?
-//     `;
-
-//     db.run(updateSql, [id], function (updateErr) {
-//       if (updateErr) {
-//         console.error("Error removing attachment:", updateErr.message);
-//         return res.status(500).json({ error: "Failed to remove attachment." });
-//       }
-
-//       res.json({ message: "Attachment removed successfully." });
-//     });
-//   });
-// });
+    res.json({ count: row?.count || 0 });
+  });
+});
 
 // ADD comment entry to log
 router.patch("/:id/comment-log", (req, res) => {

@@ -1,17 +1,14 @@
 const express = require("express");
 const axios = require("axios");
-
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   const query = req.query.q;
-
   if (!query || query.trim().length < 2) {
     return res.json([]);
   }
 
   const apiKey = process.env.GEOAPIFY_API_KEY;
-
   if (!apiKey) {
     return res.status(500).json({ error: "Missing GEOAPIFY_API_KEY in .env" });
   }
@@ -39,29 +36,16 @@ router.get("/", async (req, res) => {
           props.result_type === "postcode" ||
           !!props.city;
 
-        const isCountry = props.result_type === "country";
+        if (!isCity) return null;
 
-        if (!isCity && !isCountry) return null;
-
-        if (isCity) {
-          const cityName = props.city || props.name || props.formatted;
-          const stateName = props.state || props.county || "";
-          const countryName = props.country || "";
-
-          return {
-            name: stateName ? `${cityName}, ${stateName}` : cityName,
-            type: "city",
-            countryName,
-            latitude: props.lat,
-            longitude: props.lon,
-            externalId: props.place_id,
-          };
-        }
+        const cityName = props.city || props.name || props.formatted;
+        const stateName = props.state || props.county || "";
+        const countryName = props.country || "";
 
         return {
-          name: props.country || props.name || props.formatted,
-          type: "country",
-          countryName: props.country || "",
+          name: stateName ? `${cityName}, ${stateName}` : cityName,
+          type: "city",
+          countryName,
           latitude: props.lat,
           longitude: props.lon,
           externalId: props.place_id,
@@ -86,7 +70,6 @@ router.get("/", async (req, res) => {
       "Geoapify search error:",
       error.response?.data || error.message
     );
-
     res.status(500).json({
       error: "Failed to fetch search results.",
       details: error.response?.data || error.message,

@@ -28,30 +28,6 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
-  db.all(`PRAGMA table_info(places)`, [], (err, columns) => {
-    if (err) {
-      console.error("Failed to inspect places table:", err.message);
-      return;
-    }
-
-    const columnNames = columns.map((col) => col.name);
-
-    const addColumnIfMissing = (name, type) => {
-      if (!columnNames.includes(name)) {
-        db.run(`ALTER TABLE places ADD COLUMN ${name} ${type}`, (alterErr) => {
-          if (alterErr) {
-            console.error(`Failed adding ${name} column:`, alterErr.message);
-          }
-        });
-      }
-    };
-
-    addColumnIfMissing("image_url", "TEXT");
-    addColumnIfMissing("image_alt", "TEXT");
-    addColumnIfMissing("comment_log", "TEXT");
-    addColumnIfMissing("visit_date", "TEXT");
-  });
 });
 
 module.exports = db;
